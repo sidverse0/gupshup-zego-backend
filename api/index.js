@@ -10,7 +10,7 @@ app.use(express.json());
 // 🛡️ TERA ZEGO CREDENTIALS (SAFE IN BACKEND)
 // ==========================================
 const appID = 1259477981; 
-const serverSecret = "feb7f385d54db1c82afd132af10a82b7d60de562804a18078619b8bba253a2b6"; 
+const serverSecret = "5e1f41dd4e92ae06bd1ae4d6b8a2a657"; 
 
 // ==========================================
 // ⚙️ THE NATIVE TOKEN ENGINE (Bulletproof AES-256)
