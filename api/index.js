@@ -13,7 +13,7 @@ const appID = 1259477981;
 const serverSecret = "feb7f385d54db1c82afd132af10a82b7d60de562804a18078619b8bba253a2b6"; 
 
 // ==========================================
-// ⚙️ THE NATIVE TOKEN ENGINE (Bye Bye Zego Package)
+// ⚙️ THE NATIVE TOKEN ENGINE (Bulletproof AES-256)
 // ==========================================
 function generateToken04(appId, userId, secret, effectiveTimeInSeconds, payload) {
     const createTime = Math.floor(Date.now() / 1000);
@@ -30,7 +30,10 @@ function generateToken04(appId, userId, secret, effectiveTimeInSeconds, payload)
     let iv = Math.random().toString().substring(2, 18);
     if (iv.length < 16) iv = iv.padEnd(16, '0'); // Safe padding
     
-    const key = Buffer.from(secret, 'utf8');
+    // 🔥 SURGICAL FIX: Force key to EXACTLY 32 bytes (Crash Killer)
+    const key = Buffer.alloc(32);
+    Buffer.from(secret, 'utf8').copy(key);
+    
     const cipher = crypto.createCipheriv('aes-256-cbc', key, Buffer.from(iv, 'utf8'));
     const encrypted = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
     
