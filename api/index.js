@@ -1,18 +1,52 @@
 const express = require('express');
 const cors = require('cors');
-const { generateToken04 } = require('zego-server-assistant');
+const crypto = require('crypto'); // 🔥 NATIVE NODE.JS MODULE (No NPM needed!)
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // ==========================================
-// 🛡️ TERA ZEGO CREDENTIALS (AB SERVER ME SAFE HAIN)
+// 🛡️ TERA ZEGO CREDENTIALS (SAFE IN BACKEND)
 // ==========================================
 const appID = 1259477981; 
 const serverSecret = "feb7f385d54db1c82afd132af10a82b7d60de562804a18078619b8bba253a2b6"; 
 
-// 1. TERA SECURE TOKEN GENERATOR
+// ==========================================
+// ⚙️ THE NATIVE TOKEN ENGINE (Bye Bye Zego Package)
+// ==========================================
+function generateToken04(appId, userId, secret, effectiveTimeInSeconds, payload) {
+    const createTime = Math.floor(Date.now() / 1000);
+    const tokenInfo = {
+        app_id: appId,
+        user_id: userId,
+        nonce: Math.floor(Math.random() * 2147483647),
+        ctime: createTime,
+        expire: createTime + effectiveTimeInSeconds,
+        payload: payload || ''
+    };
+    
+    const plainText = JSON.stringify(tokenInfo);
+    let iv = Math.random().toString().substring(2, 18);
+    if (iv.length < 16) iv = iv.padEnd(16, '0'); // Safe padding
+    
+    const key = Buffer.from(secret, 'utf8');
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, Buffer.from(iv, 'utf8'));
+    const encrypted = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
+    
+    const b1 = Buffer.alloc(8);
+    b1.writeBigInt64BE(BigInt(tokenInfo.expire), 0);
+    const b2 = Buffer.alloc(2);
+    b2.writeUInt16BE(16, 0); // IV length
+    const b3 = Buffer.from(iv, 'utf8');
+    const b4 = Buffer.alloc(2);
+    b4.writeUInt16BE(encrypted.length, 0); // Ciphertext length
+    
+    const buf = Buffer.concat([b1, b2, b3, b4, encrypted]);
+    return '04' + buf.toString('base64');
+}
+
+// 1. TERA SECURE TOKEN ROUTE
 app.get('/api/getToken', (req, res) => {
     const userID = req.query.userID;
     
@@ -20,16 +54,12 @@ app.get('/api/getToken', (req, res) => {
         return res.status(400).json({ error: "userID is required" });
     }
 
-    // Token ki validity 1 ghanta (3600 seconds) rakhte hain
-    const effectiveTimeInSeconds = 3600;
-    const payload = ""; // Empty payload for normal calls
+    const effectiveTimeInSeconds = 3600; // 1 Hour Validity
     
     try {
-        // 🔥 ZEGO ENGINE ALGO (Server-Side Encryption)
-        const token = generateToken04(appID, userID, serverSecret, effectiveTimeInSeconds, payload);
-        
+        const token = generateToken04(appID, userID, serverSecret, effectiveTimeInSeconds, "");
         res.json({ 
-            success: true,
+            success: true, 
             token: token 
         });
     } catch (error) {
@@ -39,12 +69,9 @@ app.get('/api/getToken', (req, res) => {
 
 // 2. THE BLUE SCREEN DP INJECTOR (Rasta khol diya)
 app.post('/api/sendCallPush', (req, res) => {
-    const { callerName, avatarUrl, targetToken } = req.body;
-    
-    // Yahan aage chalkar hum Zego/FCM payload modify karenge
     res.json({ 
         success: true, 
-        message: "Push route is active and ready for DP Injection!" 
+        message: "Push route is active and ready!" 
     });
 });
 
